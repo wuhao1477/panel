@@ -19,7 +19,7 @@ import * as market from './views/market.js';
 import * as pluginSource from './views/plugin-source.js';
 import * as scriptList from './views/script-list.js';
 import * as scriptEditor from './views/script-editor.js';
-import * as logView from './views/log-view.js';
+import * as logPage from './views/log-page.js';
 import { renderPush } from './views/push.js';
 import { renderSettings as renderSettingsView } from './views/settings.js';
 import {
@@ -559,7 +559,7 @@ async function route() {
     else if (view === 'script-editor') next = await scriptEditor.render(root, ctx, params);
     else if (view === 'plugins') next = await pluginList.render(root, ctx);
     else if (view === 'market') next = await market.render(root, ctx);
-    else if (view === 'logs') next = await logView.render(root, ctx, params);
+    else if (view === 'logs') next = await logPage.render(root, ctx, params);
     else if (view === 'plugin-source') next = await pluginSource.render(root, ctx, params);
     else if (view === 'plugin-page') next = renderPluginPage(root, params);
     else if (view === 'push') await renderPush(root, ctx);

@@ -161,6 +161,17 @@ macro_rules! asset {
 ///
 /// ⚠️ 新增文件必须在这里登记 —— 漏登记的表现是浏览器 404，而文件明明在仓库里。
 /// 测试 `web_assets_are_complete` 会核对 `web/` 下的实际文件和这张表是否一致。
+///
+/// ⚠️ **文件名本身是个接口**：前端模块是 `import` 进来的，而广告拦截器
+/// （uBlock Origin / AdGuard / Brave 的默认列表）里有大量**裸路径子串**规则 ——
+/// 命中就是 `ERR_BLOCKED_BY_CLIENT`，`app.js` 的模块图整条失败，用户看到的是
+/// 「登录成功、但页面白屏，左下角角标停在『鉴权…』」（那个角标是 index.html 里
+/// 写死的，只有 app.js 跑起来才会被改）。实测：EasyPrivacy 第 1439 行的
+/// `/log-view.js` 就是这样一条（无 `$domain` / `$third-party` 限定，跟主机名、
+/// 端口、进程怎么起来都无关）。所以起名时避开跟踪脚本的常见命名
+/// （`log` / `track` / `analytics` / `beacon` 之类）—— 下面这个日志页因此叫
+/// `log-page.js`，不叫 `log-view.js`。`scripts/test-web-assets.mjs` 里有一条
+/// 检查盯着这件事。
 pub const ASSETS: &[Asset] = &[
     asset!("index.html"),
     asset!("css/reset.css"),
@@ -187,7 +198,7 @@ pub const ASSETS: &[Asset] = &[
     // 脚本任务：总览（#/scripts）与新建 / 编辑（#/scripts/new、#/scripts/edit/{name}）
     asset!("js/views/script-list.js"),
     asset!("js/views/script-editor.js"),
-    asset!("js/views/log-view.js"),
+    asset!("js/views/log-page.js"),
     asset!("js/views/plugin-list.js"),
     asset!("js/views/market.js"),
     asset!("js/views/plugin-source.js"),

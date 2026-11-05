@@ -140,7 +140,7 @@ rust-plugin-panel/
 │   ├── index.html      壳结构（侧边栏 / 顶栏 / 视图容器 / 消息条，无内联 CSS/JS）
 │   ├── css/            reset / theme（Mocha+Latte 变量，粉色系 accent）/ layout / components
 │   ├── js/             app（路由+鉴权）· api · editor · confirm · logstream · mock
-│   │   └── views/      task-list · task-editor · plugin-list · plugin-source · log-view
+│   │   └── views/      task-list · task-editor · plugin-list · plugin-source · log-page
 │   │                   · script-list · script-editor
 │   └── vendor/         第三方组件（子集 fork，见目录下的 FORK.md）
 │       └── puredashboard/  dialog+drawer+alert+confirm+prompt · button · toast ·

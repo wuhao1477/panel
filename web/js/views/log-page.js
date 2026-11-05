@@ -1,5 +1,5 @@
 /*
-  web/js/views/log-view.js —— 完整的日志页（终端风格）。
+  web/js/views/log-page.js —— 完整的日志页（终端风格）。
 
   这页要解决的是「排查时到底发生了什么」这一个问题，所以它比 Dashboard 上那块
   摘要多做了四件事：

@@ -107,6 +107,33 @@ for (const rel of NOT_SHIPPED) {
   );
 }
 
+// 文件名不能撞广告拦截器的规则。
+//
+// 为什么单列一条：前端模块是 `import` 进来的，而 uBlock Origin / AdGuard / Brave
+// 的默认列表里有大量**裸路径子串**规则（没有 $domain / $third-party 限定 ——
+// 跟主机名、端口、部署方式都无关）。命中一个就是 ERR_BLOCKED_BY_CLIENT，
+// 而 app.js 是静态 import 这些模块的：**一个模块被拦 = 整条模块图失败**，
+// 用户看到的是「登录成功、但页面白屏，左下角角标停在『鉴权…』」
+// （角标是 index.html 里写死的，只有 app.js 跑起来才会被改）。
+//
+// 名单只收**已经真实踩到过**的规则；加条目时把命中的列表与行号写清楚，
+// 免得下一个人以为这是拍脑袋加的。第一条就是本次事故：
+// EasyPrivacy 第 1439 行的 `/log-view.js`，命中本视图 `js/views/log-view.js`
+// —— 它现在叫 `log-page.js`。
+const FILTER_LIST_PATH_RULES = [
+  '/log-view.js', // EasyPrivacy:1439
+  '/logview.js', // EasyPrivacy（同组，跟踪脚本的常见命名）
+  '/log-reporter.js', // EasyPrivacy（同上）
+];
+const nameCollisions = onDisk.filter((rel) =>
+  FILTER_LIST_PATH_RULES.some((rule) => `/${rel}`.includes(rule)),
+);
+check(
+  nameCollisions.length === 0,
+  '资源文件名不撞广告拦截器的路径规则（命中即白屏）',
+  nameCollisions.length ? nameCollisions.join(', ') : `核了 ${onDisk.length} 个文件`,
+);
+
 // ---------------------------------------------------------------- ② 语法
 
 console.log('\n② ES Module 语法');
@@ -459,7 +486,7 @@ check(
   check(!taskListSrc2.includes("'__script__'"), '插件任务页不出现内部脚本插件名');
 
   // 运行记录横幅：脚本任务不能露内部名 `__script__`，也不能链回插件任务页。
-  const logViewSrc = readFileSync(join(REPO, 'web/js/views/log-view.js'), 'utf8');
+  const logViewSrc = readFileSync(join(REPO, 'web/js/views/log-page.js'), 'utf8');
   check(logViewSrc.includes("run.plugin === '__script__'"), '运行记录认出脚本任务');
   check(logViewSrc.includes("'看脚本任务'") && logViewSrc.includes("'#/scripts'"),
     '脚本运行记录链到脚本任务页');
@@ -927,7 +954,7 @@ const STAR = /\*\*/;
  * 注释里写一个反引号，模板串会**提前结束**，后面那半截变成语法垃圾。
  *
  * ⚠ 关键：这种截断**不一定**是语法错误 —— 它可能恰好还能被解析
- * （第二十八轮我就在 `views/log-view.js` 里踩到了：`\`.select\` / \`.input\``
+ * （第二十八轮我就在 `views/log-page.js` 里踩到了：`\`.select\` / \`.input\``
  * 被解析成"字符串 除以 什么"，`node --check` 全绿，而浏览器里整个日志页起不来、
  * 面板卡在「连接中…」）。所以「语法正确」那条**盖不住**它，必须单独查。
  */
