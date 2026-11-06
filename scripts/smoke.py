@@ -1415,6 +1415,18 @@ def anti_bruteforce_checks(tmp: Path) -> None:
             proc.kill()
         f.close()
 
+    def wait_http_200(url, headers=None, timeout=15.0):
+        """等插件页真的能打开：新实例的插件加载是异步的，早 100ms 就是 404。"""
+        deadline = time.time() + timeout
+        code = 0
+        while time.time() < deadline:
+            code, _, _ = http(url, headers=headers)
+            if code == 200:
+                return code
+            time.sleep(0.2)
+        return code
+
+
     # ── 实例 ①：默认（不信任转发头）──
     port1, proc1, f1 = make({"PANEL_TOKEN": SMOKE_TOKEN}, "default")
     try:
@@ -1602,7 +1614,7 @@ def anti_bruteforce_checks(tmp: Path) -> None:
             "插件页面默认与面板同源（不再默认多开一个端口）",
             f"plugin_ui_port={ui_port!r}",
         )
-        c1, _, _ = http(f"http://127.0.0.1:{port3}/plugins/demo/", headers={"X-Panel-Token": SMOKE_TOKEN})
+        c1 = wait_http_200(f"http://127.0.0.1:{port3}/plugins/demo/", {"X-Panel-Token": SMOKE_TOKEN})
         check(c1 == 200, "同源插件页能正常打开", f"http {c1}")
         c2, _, _ = http(f"http://127.0.0.1:{port3}/api/state", headers={"X-Panel-Token": SMOKE_TOKEN})
         check(c2 == 200, "同源插件页能读面板接口（这是同源模式的已知代价）", f"http {c2}")
@@ -1625,7 +1637,7 @@ def anti_bruteforce_checks(tmp: Path) -> None:
             f"plugin_ui_port={ui_port!r}",
         )
         ui_base = f"http://127.0.0.1:{ui_port}"
-        c1, _, _ = http(f"{ui_base}/plugins/demo/", headers={"X-Panel-Token": SMOKE_TOKEN})
+        c1 = wait_http_200(f"{ui_base}/plugins/demo/", {"X-Panel-Token": SMOKE_TOKEN})
         check(c1 == 200, "插件 origin 上能打开插件页", f"http {c1}")
         c2, _, _ = http(f"{ui_base}/api/state", headers={"X-Panel-Token": SMOKE_TOKEN})
         check(c2 == 200, "插件 origin 上白名单接口 /api/state 可用（插件页要读任务表）", f"http {c2}")
@@ -3662,20 +3674,28 @@ def script_task_checks(tmp: Path) -> None:
         j = next((x for x in st.get("jobs", []) if x.get("name") == "smoke_js"), {})
         check(j.get("override_expr") == "@every 3s", "目录脚本任务的覆盖在扫描后仍然生效", str(j.get("override_expr")))
 
-        # 目录任务墓碑 / 恢复
+        # 目录脚本没有墓碑：/api/jobs/.../delete 必须拒绝，并指向删除文件
         code, body = post_json(f"{base}/api/jobs/__script__/smoke_js/delete")
-        check(code == 200, "删除目录脚本任务（墓碑）", f"{code} {body}")
-        time.sleep(2.5)
-        _, st = fetch_json(f"{base}/api/state")
-        j = next((x for x in st.get("jobs", []) if x.get("name") == "smoke_js"), {})
-        check(j.get("deleted") is True, "目录任务删除后仍留墓碑，不会被扫描复活", str(j.get("deleted")))
-        code, body = post_json(f"{base}/api/jobs/__script__/smoke_js/restore")
-        check(code == 200, "恢复目录脚本任务", f"{code} {body}")
-        # 面板任务真删
+        check(code == 400, "删除目录脚本任务被拒绝（文件就是任务）", f"{code} {body}")
+        check(
+            "scripts/smoke_js/delete" in str((body or {}).get("error", "")),
+            "拒绝时指路「删除文件」",
+            str(body),
+        )
+
+        # 面板任务先删（它还引用 js/hello.js，先删掉才能彻底删共享文件）
         code, body = post_json(f"{base}/api/jobs/__script__/panel-x/delete")
         check(code == 200, "删除面板脚本任务", f"{code} {body}")
         _, st = fetch_json(f"{base}/api/state")
         check(not any(x.get("name") == "panel-x" for x in st.get("jobs", [])), "面板脚本任务真删掉了")
+
+        # 彻底删目录脚本：/api/scripts/.../delete 删文件 + 数据 + 运行记录
+        code, body = post_json(f"{base}/api/scripts/smoke_js/delete")
+        check(code == 200, "彻底删除目录脚本（文件）", f"{code} {body}")
+        time.sleep(2.5)
+        _, st = fetch_json(f"{base}/api/state")
+        check(not any(x.get("name") == "smoke_js" for x in st.get("jobs", [])), "目录脚本任务行已清掉")
+        check(not (tasks / "js" / "hello.js").exists(), "目录脚本文件真的删掉了")
     finally:
         proc.terminate()
         proc.wait(timeout=10)
