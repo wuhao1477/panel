@@ -43,12 +43,12 @@ services:
   panel:
     # 默认用「打 tag 后由 .github/workflows/docker-publish.yml 推到 GitHub Packages」的镜像；
     # 本地要直接从 Release 产物构建，加 --build 即可（build 段就在下面）。
-    image: ghcr.io/asunajs/panel:${PANEL_TAG:-latest}
+    image: ghcr.io/${PANEL_IMAGE_REPO:-wuhao1477/panel}:${PANEL_TAG:-latest}
     build:
       context: .
       args:
         PANEL_REPO: ${PANEL_REPO:-asunajs/panel}
-        PANEL_VERSION: ${PANEL_VERSION:-v0.6.3}
+        PANEL_VERSION: ${PANEL_VERSION:-v0.9.1}
     container_name: panel
     restart: unless-stopped
     ports:
