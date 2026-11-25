@@ -27,7 +27,7 @@
 #
 # 用法：
 #   docker build -t panel .                                   # 版本见下面的 PANEL_VERSION
-#   docker build -t panel --build-arg PANEL_VERSION=v0.6.3 .
+#   docker build -t panel --build-arg PANEL_VERSION=v0.9.1 .
 #   mkdir -p dist && cp panel-x86_64-linux-musl SHA256SUMS dist/
 #   docker build -t panel .                                   # 自动改用 dist/ 里的本地产物
 # =============================================================================
@@ -40,7 +40,7 @@ ARG ALPINE_VERSION=3.20
 FROM alpine:${ALPINE_VERSION} AS artifact
 
 ARG PANEL_REPO=asunajs/panel
-ARG PANEL_VERSION=v0.6.3
+ARG PANEL_VERSION=v0.9.1
 # 覆盖下载基址（内网镜像 / 本地目录服务器）。留空 = 走 GitHub Release。
 ARG ARTIFACT_BASE_URL=""
 # 显式指定产物文件名（默认按 TARGETARCH 推导）。
@@ -108,7 +108,7 @@ FROM alpine:${ALPINE_VERSION}
 
 ARG ALPINE_VERSION=3.20
 ARG PANEL_REPO=asunajs/panel
-ARG PANEL_VERSION=v0.6.3
+ARG PANEL_VERSION=v0.9.1
 
 LABEL org.opencontainers.image.title="panel" \
       org.opencontainers.image.description="插件任务面板（Rust + LLRT，镜像基于官方 Release 静态产物构建）" \

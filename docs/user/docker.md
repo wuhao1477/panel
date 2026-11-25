@@ -21,6 +21,9 @@
 | `.dockerignore` | 上下文里只留 dist/（几百 MB 的 vendor/、.git 不进上下文） |
 | `.github/workflows/docker-publish.yml` | Release 跑完 → 多架构镜像推到 ghcr.io |
 
+默认镜像名是 `ghcr.io/wuhao1477/panel`，与 fork 的自动发布目标一致。使用自己的 fork
+部署时，可通过 `PANEL_IMAGE_REPO=<owner>/<repo>` 覆盖镜像名。
+
 ## 第一次部署
 
     export PANEL_TOKEN='至少 8 位的口令'
@@ -57,7 +60,7 @@ compose 只挂 `./data` 一个卷。备份 = `cp -a ./data`；升级镜像不动
 
     # 默认版本见 Dockerfile 里的 PANEL_VERSION
     docker build -t panel .
-    docker build -t panel --build-arg PANEL_VERSION=v0.6.3 .
+    docker build -t panel --build-arg PANEL_VERSION=v0.9.1 .
 
     # 离线 / 内网：把产物放进 dist/，构建会自动改用它
     mkdir -p dist && cp panel-x86_64-linux-musl SHA256SUMS dist/
